@@ -1,0 +1,298 @@
+        -:    0:Source:cxml.c
+        -:    0:Graph:cxml.gcno
+        -:    0:Data:cxml.gcda
+        -:    0:Runs:1
+        -:    0:Programs:1
+        -:    1:/*
+        -:    2:MIT license
+        -:    3:
+        -:    4:Copyright (c) 2019 comm-lab
+        -:    5:
+        -:    6:Permission is hereby granted, free of charge, to any person
+        -:    7:obtaining a copy of this software and associated documentation
+        -:    8:files (the "Software"), to deal in the Software without
+        -:    9:restriction, including without limitation the rights to use,
+        -:   10:copy, modify, merge, publish, distribute, sublicense, and/or sell
+        -:   11:copies of the Software, and to permit persons to whom the
+        -:   12:Software is furnished to do so, subject to the following
+        -:   13:conditions:
+        -:   14:
+        -:   15:The above copyright notice and this permission notice shall be
+        -:   16:included in all copies or substantial portions of the Software.
+        -:   17:int xml_string_cmp(struct XmlString* a, struct XmlString* b);
+        -:   18:
+        -:   19:THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+        -:   20:EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+        -:   21:OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+        -:   22:NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+        -:   23:HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+        -:   24:WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+        -:   25:FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+        -:   26:OTHER DEALINGS IN THE SOFTWARE.
+        -:   27:*/
+        -:   28:
+        -:   29:#include <cxml.h>
+        -:   30:
+        -:   31:
+      198:   32:static int is_whitespace(char c) {
+      198:   33:    return c == ' ' || c == '\n' || c == '\r' || c == '\t';
+      198:   33-block  0
+      142:   33-block  1
+      134:   33-block  2
+      134:   33-block  3
+      134:   33-block  4
+      198:   33-block  5
+        -:   34:}
+        -:   35:
+        2:   36:void xml_document_create (struct XmlDocument* doc, 
+        -:   37:                        const char* source, 
+        -:   38:                        unsigned long length) 
+        2:   39:{
+        2:   40:    doc->source = source;
+        2:   41:    doc->length = length;
+        2:   42:    doc->cursor = 0;
+        2:   43:    doc->internal_state = XML_IDLE;
+        2:   44:}
+        2:   44-block  0
+        -:   45:
+       48:   46:int xml_read(struct XmlDocument* doc) {
+      266:   47:    int event = XML_EOF;
+        -:   48:
+      306:   49:    while(doc->cursor < doc->length) {
+       48:   49-block  0
+      266:   49-block  1
+      218:   49-block  2
+      262:   50:        switch(doc->source[doc->cursor]) {
+      262:   50-block  0
+       44:   50-block  1
+       10:   50-block  2
+    $$$$$:   50-block  3
+    $$$$$:   50-block  4
+        -:   51:            case ' ':
+        -:   52:            case '\n':
+        -:   53:            case '\r':
+        -:   54:            case '\t':
+        -:   55:                // Skip whitespace
+       26:   56:                break;
+        -:   57:
+        -:   58:            case '<':
+       26:   59:                if(doc->source[doc->cursor + 1] != '/') {
+       26:   59-block  0
+        -:   60:                    event = XML_TAG_BEGIN;
+       14:   61:                } else {
+       14:   61-block  0
+       12:   62:                    doc->cursor++;
+       12:   62-block  0
+        -:   63:                    event = XML_TAG_END;
+        -:   64:                }
+       26:   65:                goto on_event;
+        -:   66:                break;
+        -:   67:
+        -:   68:            case '>':
+       26:   69:                if(doc->internal_state == XML_TAG_BEGIN) {
+       26:   69-block  0
+        -:   70:                    event = XML_TEXT;
+       14:   71:                    goto on_event;
+       14:   71-block  0
+        -:   72:                } else {
+        -:   73:                    event = XML_IDLE;
+        -:   74:                }
+       20:   75:                break;
+       12:   75-block  0
+        -:   76:
+        -:   77:            case '=':
+        8:   78:                if(doc->internal_state == XML_TAG_BEGIN) {
+        8:   78-block  0
+        4:   79:                    doc->internal_state = XML_ATTRIBUTE;
+        4:   80:                    return XML_ATTRIBUTE;
+        4:   80-block  0
+        4:   81:                } else if(doc->internal_state == XML_ATTRIBUTE) {
+        4:   81-block  0
+        4:   82:                    doc->internal_state = XML_TAG_BEGIN;
+        4:   83:                }
+        4:   83-block  0
+      148:   84:                break;
+        -:   85:
+        -:   86:            default:
+      148:   87:                break;
+      148:   87-block  0
+      218:   88:        }
+        -:   89:
+      218:   90:        doc->cursor++;
+        -:   91:    }
+        -:   92:
+        -:   93:on_event:
+       44:   94:    doc->internal_state = event;
+       44:   95:    return event;
+       44:   95-block  0
+       48:   96:}
+       48:   96-block  0
+        -:   97:
+       14:   98:struct XmlString xml_name(struct XmlDocument* doc) {
+        -:   99:    struct XmlString str;
+       14:  100:    str.str = &doc->source[++doc->cursor];
+        -:  101:    str.length = 0;
+        -:  102:    
+      214:  103:    while(!is_whitespace(doc->source[doc->cursor]) &&
+       14:  103-block  0
+      114:  103-block  1
+      100:  103-block  2
+      100:  103-block  3
+      110:  104:        doc->source[doc->cursor] != '>' &&
+      110:  104-block  0
+      100:  105:        doc->source[doc->cursor] != '/' &&
+      100:  105-block  0
+      100:  105-block  1
+      100:  105-block  2
+      100:  106:        doc->cursor < doc->length)
+        -:  107:    {
+      100:  108:        doc->cursor++;
+      100:  109:        str.length++;
+        -:  110:    }
+        -:  111:    
+       14:  112:    return str;
+       14:  112-block  0
+        -:  113:}
+        -:  114:
+       14:  115:struct XmlString xml_text(struct XmlDocument* doc) {
+        -:  116:    struct XmlString str;
+       14:  117:    str.str = &doc->source[++doc->cursor];
+        -:  118:    str.length = 0;
+        -:  119:    
+      142:  120:    while(doc->source[doc->cursor] != '<' &&
+       14:  120-block  0
+      142:  120-block  1
+      128:  120-block  2
+      128:  120-block  3
+      128:  120-block  4
+      128:  120-block  5
+      128:  121:        doc->cursor < doc->length)
+        -:  122:    {
+      128:  123:        doc->cursor++;
+      128:  124:        str.length++;
+        -:  125:    }
+        -:  126:    
+       14:  127:    return str;
+       14:  127-block  0
+        -:  128:}
+        -:  129:
+       14:  130:void xml_string_trim(struct XmlString* str) {
+       60:  131:    while(is_whitespace(str->str[0]) && str->length) {
+       14:  131-block  0
+       60:  131-block  1
+       46:  131-block  2
+       46:  131-block  3
+       46:  131-block  4
+       46:  132:        str->str++;
+       46:  133:        str->length--;
+        -:  134:    }
+        -:  135:
+       24:  136:    while(is_whitespace(str->str[str->length - 1]) && str->length) {
+       14:  136-block  0
+       24:  136-block  1
+       14:  136-block  2
+       10:  136-block  3
+       10:  136-block  4
+       10:  137:        str->length--;
+        -:  138:    }
+       14:  139:}
+       14:  139-block  0
+        -:  140:
+        -:  141:
+        4:  142:struct XmlString xml_attr_name(struct XmlDocument* doc) {
+        -:  143:    struct XmlString str;
+        4:  144:    str.str = &doc->source[doc->cursor]; // Cursor is placed at = character
+        -:  145:    str.length = 0;
+        -:  146:    
+       24:  147:    while(*(str.str - 1) != ' ') {
+        4:  147-block  0
+       24:  147-block  1
+       20:  147-block  2
+       20:  147-block  3
+       20:  148:        str.str--;
+       20:  149:        str.length++;
+        -:  150:    }
+        -:  151:
+        4:  152:    return str;
+        4:  152-block  0
+        -:  153:}
+        -:  154:
+        4:  155:struct XmlString xml_attr_value(struct XmlDocument* doc) {
+        -:  156:    struct XmlString str;
+        4:  157:    str.str = &doc->source[doc->cursor + 2]; // Cursor is placed at = character
+        -:  158:    str.length = 0;
+        -:  159:    
+       24:  160:    while(str.str[str.length] != '"' && str.str[str.length] != '\'') {
+        4:  160-block  0
+       24:  160-block  1
+       20:  160-block  2
+       20:  160-block  3
+       20:  160-block  4
+       20:  161:        str.length++;
+        -:  162:    }
+        -:  163:
+        4:  164:    return str;
+        4:  164-block  0
+        -:  165:}
+        -:  166:
+    #####:  167:int xml_string_eq(struct XmlString* a, struct XmlString* b) {
+    #####:  168:    if(b->length != a->length) {
+    $$$$$:  168-block  0
+    #####:  169:        return 0;
+    $$$$$:  169-block  0
+        -:  170:    }
+        -:  171:
+    #####:  172:    if(a->str == b->str) {
+    $$$$$:  172-block  0
+        -:  173:        // Both string refer to the same slice
+    #####:  174:        return 1;
+    $$$$$:  174-block  0
+        -:  175:    }
+        -:  176:
+    #####:  177:    for (long i=0; i < a->length; i++) {
+    $$$$$:  177-block  0
+    $$$$$:  177-block  1
+    $$$$$:  177-block  2
+    $$$$$:  177-block  3
+    #####:  178:        if(a->str[i] != b->str[i]) {
+    $$$$$:  178-block  0
+    #####:  179:            return 0;
+    $$$$$:  179-block  0
+        -:  180:        }
+        -:  181:    }
+        -:  182:
+    #####:  183:    return 1;
+    $$$$$:  183-block  0
+    #####:  184:}
+    $$$$$:  184-block  0
+        -:  185:
+    #####:  186:int xml_string_match(struct XmlString* a, const char* b) {
+    #####:  187:    for(long i=0; i<a->length; i++) {
+    $$$$$:  187-block  0
+    $$$$$:  187-block  1
+    $$$$$:  187-block  2
+    $$$$$:  187-block  3
+    #####:  188:        if(a->str[i] != b[i] || b[i] == 0) {
+    $$$$$:  188-block  0
+    $$$$$:  188-block  1
+    #####:  189:            return 0;
+    $$$$$:  189-block  0
+        -:  190:        }
+        -:  191:    }
+        -:  192:
+    #####:  193:    return 1;
+    $$$$$:  193-block  0
+    #####:  194:}
+    $$$$$:  194-block  0
+        -:  195:
+    #####:  196:void xml_string_cpy(struct XmlString* src, char* dest) {
+    #####:  197:    for(long i=0; i<src->length; i++) {
+    $$$$$:  197-block  0
+    $$$$$:  197-block  1
+    $$$$$:  197-block  2
+    $$$$$:  197-block  3
+    #####:  198:        dest[i] = src->str[i];
+        -:  199:    }
+    #####:  200:    dest[src->length] = 0;
+    #####:  201:}
+    $$$$$:  201-block  0
