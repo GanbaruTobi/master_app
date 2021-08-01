@@ -1,5 +1,0 @@
-digraph "CFG for '__llvm_gcov_init' function" {
-	label="CFG for '__llvm_gcov_init' function";
-
-	Node0x557071005700 [shape=record,color="#b70d28ff", style=filled, fillcolor="#b70d2870",label="{%0:\l  call void @llvm_gcov_init(void ()* nonnull @__llvm_gcov_writeout, void ()*\l... nonnull @__llvm_gcov_reset)\l  ret void\l}"];
-}
